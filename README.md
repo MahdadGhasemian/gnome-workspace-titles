@@ -5,8 +5,8 @@
 1. Install the extension
 
 ```bash
-mkdir -p ~/.local/share/gnome-shell/extensions/gnome-workspace-titles@MahdadGhasemian.github.com
-cp -r src/* ~/.local/share/gnome-shell/extensions/gnome-workspace-titles@MahdadGhasemian.github.com/
+mkdir -p ~/.local/share/gnome-shell/extensions/gnome-workspace-titles@MahdadGhasemian.github.io
+cp -r src/* ~/.local/share/gnome-shell/extensions/gnome-workspace-titles@MahdadGhasemian.github.io/
 ```
 
 2. Reload GNOME Shell:
@@ -19,7 +19,7 @@ cp -r src/* ~/.local/share/gnome-shell/extensions/gnome-workspace-titles@MahdadG
 ```bash
 sudo apt install gnome-shell-extension-manager
 
-gnome-extensions enable gnome-workspace-titles@MahdadGhasemian.github.com
+gnome-extensions enable gnome-workspace-titles@MahdadGhasemian.github.io
 ```
 
 4. Debug
@@ -28,4 +28,29 @@ gnome-extensions enable gnome-workspace-titles@MahdadGhasemian.github.com
 journalctl -f -o cat /usr/bin/gnome-shell
 journalctl -f -o cat /usr/bin/gnome-shell | grep gnome-workspace-titles
 journalctl -f -o cat /usr/bin/gnome-shell | grep GnomeWorkspaceTitlesExtension
+```
+
+## Publish to GNOME Extensions
+
+```bash
+cd src && \
+zip -r ../output/gnome-workspace-titles.zip *
+```
+
+## Installing extention locally
+
+1. Install via its zip file
+
+```bash
+gnome-extensions install output/gnome-workspace-titles.zip
+```
+
+2. Reload GNOME Shell:
+
+- Press Alt + F2, type r, and press Enter.
+
+3. Enable it:
+
+```bash
+gnome-extensions enable gnome-workspace-titles@MahdadGhasemian.github.io
 ```
