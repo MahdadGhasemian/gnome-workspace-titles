@@ -18,11 +18,11 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         const box = new St.BoxLayout({ style_class: 'workspace-indicator-box', vertical: false });
 
         // Icon
-        const icon = new St.Icon({
-            icon_name: 'face-laugh-symbolic',
-            style_class: 'system-status-icon'
-        });
-        box.add_child(icon);
+        // const icon = new St.Icon({
+        //     icon_name: 'face-laugh-symbolic',
+        //     style_class: 'system-status-icon'
+        // });
+        // box.add_child(icon);
 
         // Label for workspace number
         this._workspaceLabel = new St.Label({
