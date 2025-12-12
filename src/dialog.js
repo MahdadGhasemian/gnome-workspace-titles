@@ -19,6 +19,9 @@ export const InputDialog = GObject.registerClass(
                 layout_manager: new Clutter.BinLayout(),
                 x_expand: true,
                 y_expand: true,
+                reactive: true,
+                can_focus: true,
+                track_hover: true,
                 style_class: 'input-dialog-overlay'
             });
             Main.layoutManager.uiGroup.add_child(this._overlay);
