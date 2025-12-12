@@ -1,5 +1,7 @@
 # Gnome Workspace Titles
 
+![Screenshot](./.images/screenshot.png)
+
 ## Install & Test Locally
 
 1. Install the extension
@@ -37,7 +39,9 @@ cd src && \
 zip -r ../output/gnome-workspace-titles.zip *
 ```
 
-## Installing extention locally
+🔗 [Submit to GNOME Extensions](https://extensions.gnome.org/submit/)
+
+## Installing extension locally
 
 1. Install via its zip file
 
