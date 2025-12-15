@@ -17,13 +17,6 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         // Create a horizontal box to hold icon + label
         const box = new St.BoxLayout({ style_class: 'workspace-indicator-box', vertical: false });
 
-        // Icon
-        // const icon = new St.Icon({
-        //     icon_name: 'face-laugh-symbolic',
-        //     style_class: 'system-status-icon'
-        // });
-        // box.add_child(icon);
-
         // Label for workspace number
         this._workspaceLabel = new St.Label({
             text: '1',
@@ -50,7 +43,7 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         // Make the indicator clickable
         this._indicator.connect('button-press-event', () => this._openRenamePopup());
 
-        log("[GnomeWorkspaceTitlesExtension] Enabled");
+        console.debug("[GnomeWorkspaceTitlesExtension] Enabled");
     }
 
     disable() {
@@ -62,8 +55,6 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         this._indicator?.destroy();
         this._indicator = null;
         this._workspaceLabel = null;
-
-        console.trace();
     }
 
     _updateWorkspaceNumber() {
