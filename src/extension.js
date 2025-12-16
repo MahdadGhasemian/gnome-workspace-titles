@@ -47,14 +47,18 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
     }
 
     disable() {
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
+        }
+
         if (this._workspaceSignal) {
             global.workspace_manager.disconnect(this._workspaceSignal);
             this._workspaceSignal = null;
         }
 
-        this._indicator?.destroy();
-        this._indicator = null;
-        this._workspaceLabel = null;
+        // Clean up _workspaceNames on disable
+        this._workspaceNames = [];
     }
 
     _updateWorkspaceNumber() {

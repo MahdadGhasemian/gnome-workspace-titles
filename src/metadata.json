@@ -4,5 +4,5 @@
   "description": "Set and display custom names for your Ubuntu GNOME workspaces.",
   "shell-version": ["46", "45"],
   "url": "https://github.com/MahdadGhasemian/gnome-workspace-titles",
-  "version": 5
+  "version": 6
 }

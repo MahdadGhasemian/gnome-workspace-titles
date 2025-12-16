@@ -39,7 +39,7 @@ cd src && \
 zip -r ../output/gnome-workspace-titles.zip *
 ```
 
-🔗 [Submit to GNOME Extensions](https://extensions.gnome.org/submit/)
+🔗 [Upload to GNOME Extensions](https://extensions.gnome.org/upload/)
 
 ## Installing extension locally
 
