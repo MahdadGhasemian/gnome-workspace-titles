@@ -1,5 +1,6 @@
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -8,9 +9,12 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import { InputDialog } from './dialog.js';
 
 export default class GnomeWorkspaceTitlesExtension extends Extension {
-    _workspaceNames = [];
-
     enable() {
+        // Initialize GSettings
+        this._settings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.wm.preferences',
+        });
+
         // Create a panel button
         this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
 
@@ -47,42 +51,78 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
     }
 
     disable() {
+        // Clean up
+        this._settings = null;
+
+        // Remove the indicator from the panel
         if (this._indicator) {
             this._indicator.destroy();
             this._indicator = null;
         }
 
+        // Disconnect workspace signal if exists
         if (this._workspaceSignal) {
             global.workspace_manager.disconnect(this._workspaceSignal);
             this._workspaceSignal = null;
         }
 
-        // Clean up _workspaceNames on disable
-        this._workspaceNames = [];
+        // Disconnect click signal if exists
+        if (this._clickSignal) {
+            this._indicator.disconnect(this._clickSignal);
+            this._clickSignal = null;
+        }
     }
 
+    // Retrieve workspace names from GSettings
+    _getWorkspaceNames() {
+        return this._settings.get_strv('workspace-names');
+    }
+
+    // Set the name for a specific workspace
+    _setWorkspaceName(index, newName) {
+        const names = this._getWorkspaceNames();
+
+        // Ensure array is large enough
+        while (names.length <= index) {
+            names.push('');
+        }
+
+        names[index] = newName;
+        this._settings.set_strv('workspace-names', names);
+    }
+
+    // Update the workspace number label
     _updateWorkspaceNumber() {
         const activeIndex = global.workspace_manager.get_active_workspace_index();
-        const name = this._workspaceNames[activeIndex] || `Workspace ${activeIndex + 1}`;
+        const names = this._getWorkspaceNames();
+
+        const name = names[activeIndex] || `Workspace ${activeIndex + 1}`;
         this._workspaceLabel.set_text(name);
     }
 
+    // Open a popup dialog to rename the current workspace
     async _openRenamePopup() {
         const activeIndex = global.workspace_manager.get_active_workspace_index();
-        const currentName = this._workspaceNames[activeIndex] || `Workspace ${activeIndex + 1}`;
+        const names = this._getWorkspaceNames();
+
+        const currentName = names[activeIndex] || `Workspace ${activeIndex + 1}`;
 
         const dialog = new InputDialog('Rename workspace:', currentName);
         const result = await dialog.open();
 
         if (result !== null) {
             const newName = result.trim();
+
             if (newName) {
-                this._workspaceNames[activeIndex] = newName;
+                // Set the new name
+                this._setWorkspaceName(activeIndex, newName);
             } else {
-                delete this._workspaceNames[activeIndex];
+                // Clear the name
+                names[activeIndex] = '';
+                this._settings.set_strv('workspace-names', names);
             }
+
             this._updateWorkspaceNumber();
         }
     }
-
 }
