@@ -45,27 +45,48 @@ export const InputDialog = GObject.registerClass(
                 text: initialText,
                 style_class: 'input-dialog-entry',
                 hint_text: 'Enter text...',
-                x_expand: true
+                x_expand: true,
+                track_hover: true,
+                can_focus: true
             });
             this._entry.clutter_text.set_selection(0, -1);
-            this._dialogBox.add_child(this._entry);
+
+            // Handle Enter via 'activate'
+            this._entry.clutter_text.connect('activate', () => {
+                this.close(true);
+            });
 
             // Buttons
             const buttonBox = new St.BoxLayout({ style_class: 'input-dialog-buttons' });
             buttonBox.spacing = 10;
 
-            const cancelButton = new St.Button({ label: 'Cancel' });
+            // Cancel button
+            const cancelButton = new St.Button({
+                label: 'Cancel',
+                reactive: true,
+                track_hover: true,
+                style_class: 'input-dialog-button'
+            });
             cancelButton.connect('clicked', () => this.close(false));
 
-            const okButton = new St.Button({ label: 'OK' });
+            // Ok button
+            const okButton = new St.Button({
+                label: 'OK',
+                reactive: true,
+                track_hover: true,
+                style_class: 'input-dialog-button input-dialog-button-ok'
+            });
             okButton.connect('clicked', () => this.close(true));
 
             buttonBox.add_child(cancelButton);
             buttonBox.add_child(okButton);
+
+            this._dialogBox.add_child(this._entry);
             this._dialogBox.add_child(buttonBox);
 
             this._overlay.add_child(this._dialogBox);
             this._resolve = null;
+            this._escapeEventId = null;
         }
 
         open() {
@@ -75,12 +96,32 @@ export const InputDialog = GObject.registerClass(
                 duration: 200,
                 mode: Clutter.AnimationMode.EASE_OUT_QUAD
             });
+
+            // Focus the entry
             this.grabFocus();
+
+            // Only listen for Escape on overlay (Enter is handled by 'activate')
+            this._escapeEventId = this._overlay.connect('key-press-event', (actor, event) => {
+                const key = event.get_key_symbol();
+                if (key === Clutter.KEY_Escape) {
+                    this.close(false);
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+            });
+
             return new Promise(resolve => this._resolve = resolve);
         }
 
         close(confirm = false) {
+            // Clean up
+            if (this._escapeEventId) {
+                this._overlay.disconnect(this._escapeEventId);
+                this._escapeEventId = null;
+            }
+
             const text = confirm ? this._entry.text : null;
+
             this._overlay.ease({
                 opacity: 0,
                 duration: 150,
