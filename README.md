@@ -1,6 +1,6 @@
 # Gnome Workspace Titles
 
-![Screenshot](./.images/screenshot.png)
+![Screenshot](./.images/screenshot2.png)
 
 ## Install & Test Locally
 
