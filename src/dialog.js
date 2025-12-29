@@ -5,7 +5,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 export const InputDialog = GObject.registerClass(
     class InputDialog extends St.BoxLayout {
-        _init(prompt, initialText = '') {
+        _init(prompt, initialText = '', checkboxLabel = null, initialCheckboxState = false) {
             super._init({
                 vertical: true,
                 style_class: 'input-dialog',
@@ -41,6 +41,7 @@ export const InputDialog = GObject.registerClass(
                 this._dialogBox.add_child(label);
             }
 
+            // Text entry
             this._entry = new St.Entry({
                 text: initialText,
                 style_class: 'input-dialog-entry',
@@ -51,10 +52,37 @@ export const InputDialog = GObject.registerClass(
             });
             this._entry.clutter_text.set_selection(0, -1);
 
-            // Handle Enter via 'activate'
             this._entry.clutter_text.connect('activate', () => {
                 this.close(true);
             });
+
+            // Checkbox (only added if label is provided)
+            if (checkboxLabel) {
+                this._checkbox = new St.Button({
+                    label: checkboxLabel,
+                    toggle_mode: true,
+                    reactive: true,
+                    track_hover: true,
+                    style_class: 'input-dialog-checkbox',
+                    checked: initialCheckboxState
+                });
+
+                // Visual feedback for checked state
+                this._checkbox.connect('notify::checked', () => {
+                    if (this._checkbox.checked) {
+                        this._checkbox.add_style_pseudo_class('checked');
+                    } else {
+                        this._checkbox.remove_style_pseudo_class('checked');
+                    }
+                });
+
+                // Initial state
+                if (this._checkbox.checked) {
+                    this._checkbox.add_style_pseudo_class('checked');
+                }
+
+                this._dialogBox.add_child(this._checkbox);
+            }
 
             // Buttons
             const buttonBox = new St.BoxLayout({ style_class: 'input-dialog-buttons' });
@@ -82,9 +110,13 @@ export const InputDialog = GObject.registerClass(
             buttonBox.add_child(okButton);
 
             this._dialogBox.add_child(this._entry);
+            if (this._checkbox) {
+                // Already added above, just ensure order
+            }
             this._dialogBox.add_child(buttonBox);
 
             this._overlay.add_child(this._dialogBox);
+
             this._resolve = null;
             this._escapeEventId = null;
         }
@@ -100,7 +132,6 @@ export const InputDialog = GObject.registerClass(
             // Focus the entry
             this.grabFocus();
 
-            // Only listen for Escape on overlay (Enter is handled by 'activate')
             this._escapeEventId = this._overlay.connect('key-press-event', (actor, event) => {
                 const key = event.get_key_symbol();
                 if (key === Clutter.KEY_Escape) {
@@ -120,7 +151,10 @@ export const InputDialog = GObject.registerClass(
                 this._escapeEventId = null;
             }
 
-            const text = confirm ? this._entry.text : null;
+            const result = confirm ? {
+                text: this._entry.text.trim(),
+                checked: this._checkbox ? this._checkbox.checked : false
+            } : null;
 
             this._overlay.ease({
                 opacity: 0,
@@ -128,7 +162,7 @@ export const InputDialog = GObject.registerClass(
                 mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                 onComplete: () => {
                     this._overlay.destroy();
-                    if (this._resolve) this._resolve(text);
+                    if (this._resolve) this._resolve(result);
                 }
             });
         }

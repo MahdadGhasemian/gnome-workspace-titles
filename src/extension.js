@@ -1,6 +1,5 @@
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-import Gio from 'gi://Gio';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -10,10 +9,8 @@ import { InputDialog } from './dialog.js';
 
 export default class GnomeWorkspaceTitlesExtension extends Extension {
     enable() {
-        // Initialize GSettings
-        this._settings = new Gio.Settings({
-            schema_id: 'org.gnome.desktop.wm.preferences',
-        });
+        // Use proper extension settings (schema)
+        this._settings = this.getSettings('org.gnome.shell.extensions.gnome-workspace-titles');
 
         // Create a panel button
         this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
@@ -36,6 +33,7 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         Main.panel.addToStatusArea(this.uuid, this._indicator);
 
         // Update the label initially
+        this._updateWorkspaceInitially();
         this._updateWorkspaceNumber();
 
         // Connect signal to update on workspace change
@@ -43,6 +41,9 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
             'active-workspace-changed',
             () => this._updateWorkspaceNumber()
         );
+
+        // update when settings change
+        this._settings.connect('changed', () => this._updateWorkspaceNumber());
 
         // Make the indicator clickable
         this._indicator.connect('button-press-event', () => this._openRenamePopup());
@@ -52,28 +53,27 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
 
     disable() {
         // Clean up
-        this._settings = null;
-
-        // Remove the indicator from the panel
-        if (this._indicator) {
-            this._indicator.destroy();
-            this._indicator = null;
-        }
-
-        // Disconnect workspace signal if exists
         if (this._workspaceSignal) {
             global.workspace_manager.disconnect(this._workspaceSignal);
             this._workspaceSignal = null;
         }
 
-        // Disconnect click signal if exists
-        if (this._clickSignal) {
-            this._indicator.disconnect(this._clickSignal);
-            this._clickSignal = null;
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
         }
+
+        this._settings = null;
     }
 
-    // Retrieve workspace names from GSettings
+    // ───────────────────────────────────────────────
+    // Helper methods
+    // ───────────────────────────────────────────────
+
+    _shouldUseCustomNames() {
+        return this._settings.get_boolean('enable-custom-names');
+    }
+
     _getWorkspaceNames() {
         return this._settings.get_strv('workspace-names');
     }
@@ -91,13 +91,35 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         this._settings.set_strv('workspace-names', names);
     }
 
-    // Update the workspace number label
+    _updateWorkspaceInitially() {
+        const shouldUseCustomNames = this._shouldUseCustomNames();
+        const activeIndex = global.workspace_manager.get_active_workspace_index();
+
+        if (shouldUseCustomNames) {
+            this._updateWorkspaceNumber();
+            return;
+        }
+
+        // Reset all names to default when feature is disabled on startup
+        const nWorkspaces = global.workspace_manager.n_workspaces;
+        const defaultNames = Array.from({ length: nWorkspaces }, (_, i) => `Workspace ${i + 1}`);
+
+        this._settings.set_strv('workspace-names', defaultNames);
+
+        this._workspaceLabel.set_text(`Workspace ${activeIndex + 1}`);
+    }
+
     _updateWorkspaceNumber() {
         const activeIndex = global.workspace_manager.get_active_workspace_index();
         const names = this._getWorkspaceNames();
 
-        const name = names[activeIndex] || `Workspace ${activeIndex + 1}`;
-        this._workspaceLabel.set_text(name);
+        let name = names[activeIndex]?.trim();
+        if (name) {
+            this._workspaceLabel.set_text(name);
+            return;
+        }
+
+        this._workspaceLabel.set_text(`Workspace ${activeIndex + 1}`);
     }
 
     // Open a popup dialog to rename the current workspace
@@ -105,24 +127,35 @@ export default class GnomeWorkspaceTitlesExtension extends Extension {
         const activeIndex = global.workspace_manager.get_active_workspace_index();
         const names = this._getWorkspaceNames();
 
-        const currentName = names[activeIndex] || `Workspace ${activeIndex + 1}`;
+        const currentName = this._shouldUseCustomNames()
+            ? (names[activeIndex]?.trim() || `Workspace ${activeIndex + 1}`)
+            : `Workspace ${activeIndex + 1}`;
 
-        const dialog = new InputDialog('Rename workspace:', currentName);
+        const dialog = new InputDialog(
+            'Rename workspace:',
+            currentName,
+            'Use custom names after restart',
+            this._shouldUseCustomNames()
+        );
+
         const result = await dialog.open();
 
         if (result !== null) {
-            const newName = result.trim();
+            this._settings.set_boolean('enable-custom-names', result.checked);
+
+            const newName = result.text.trim();
 
             if (newName) {
                 // Set the new name
                 this._setWorkspaceName(activeIndex, newName);
             } else {
-                // Clear the name
-                names[activeIndex] = '';
-                this._settings.set_strv('workspace-names', names);
+                // Clear the name for current workspace
+                const currentNames = this._getWorkspaceNames();
+                if (currentNames[activeIndex]) {
+                    currentNames[activeIndex] = '';
+                    this._settings.set_strv('workspace-names', currentNames);
+                }
             }
-
-            this._updateWorkspaceNumber();
         }
     }
 }

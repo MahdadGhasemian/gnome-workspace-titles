@@ -49,3 +49,20 @@
 .input-dialog-button-ok:hover {
   background-color: rgb(60, 110, 60);
 }
+
+.input-dialog-checkbox {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 2px solid rgba(22, 51, 22, 0.2);
+  background-color: rgba(255,255,255,0.1);
+}
+
+.input-dialog-checkbox:checked {
+  background-color: rgb(60, 110, 60);
+  color: #ffffff;
+}
+
+.input-dialog-checkbox:hover {
+  border: 2px solid rgba(255,255,255,0.1);
+}
+
