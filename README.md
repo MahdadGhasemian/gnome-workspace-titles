@@ -36,7 +36,6 @@ journalctl -f -o cat /usr/bin/gnome-shell | grep GnomeWorkspaceTitlesExtension
 
 ```bash
 cd src && \
-glib-compile-schemas schemas/ && \
 zip -r ../output/gnome-workspace-titles.zip * && \
 cd .. && \
 gnome-extensions install output/gnome-workspace-titles.zip --force
@@ -46,7 +45,6 @@ gnome-extensions install output/gnome-workspace-titles.zip --force
 
 ```bash
 cd src && \
-glib-compile-schemas schemas/ && \
 zip -r ../output/gnome-workspace-titles.zip * && \
 cd .. && \
 ```

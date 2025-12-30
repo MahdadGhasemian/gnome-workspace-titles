@@ -10,7 +10,7 @@ import { InputDialog } from './dialog.js';
 export default class GnomeWorkspaceTitlesExtension extends Extension {
     enable() {
         // Use proper extension settings (schema)
-        this._settings = this.getSettings('org.gnome.shell.extensions.gnome-workspace-titles');
+        this._settings = this.getSettings();
 
         // Create a panel button
         this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
