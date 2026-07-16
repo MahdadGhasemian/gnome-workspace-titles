@@ -41,10 +41,6 @@ cd .. && \
 gnome-extensions install output/gnome-workspace-titles.zip --force
 ```
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
 ## Publish to GNOME Extensions
 
 ```bash
@@ -72,3 +68,7 @@ gnome-extensions install output/gnome-workspace-titles.zip
 ```bash
 gnome-extensions enable gnome-workspace-titles@MahdadGhasemian.github.io
 ```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
